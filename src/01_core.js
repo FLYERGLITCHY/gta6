@@ -14,7 +14,7 @@ const G = {
   vehicles: [], npcs: [], projectiles: [], protagonists: [], player: null, controller: null, camRig: null,
   traffic: null, peds: null, police: null, wanted: null, combat: null, missions: null, hud: null, phone: null,
   cash: 25000, time: 0, dt: 0, timeScale: 1, paused: true, started: false, frame: 0, focus: new THREE.Vector3(),
-  events: [], switching: false, showFps: false, slowmo: 0
+  events: [], switching: false, showFps: false, slowmo: 0, phoneOpen: false, radio: 3, navTarget: null, gps: null, delivery: null, debugDrive: null, debugMove: null
 };
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);

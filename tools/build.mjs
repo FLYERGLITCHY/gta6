@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-const dir = '/home/ubuntu/gta-dev/src';
+const dir = '/workspace/src';
 const out = process.argv[2] || '/workspace/index.html';
 const exclude = new Set((process.env.EXCLUDE || '').split(',').filter(Boolean));
 const extra = (process.env.EXTRA || '').split(',').filter(Boolean);
