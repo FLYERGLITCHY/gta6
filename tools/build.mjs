@@ -1,0 +1,14 @@
+import fs from 'fs';
+import path from 'path';
+const dir = '/home/ubuntu/gta-dev/src';
+const out = process.argv[2] || '/workspace/index.html';
+const exclude = new Set((process.env.EXCLUDE || '').split(',').filter(Boolean));
+const extra = (process.env.EXTRA || '').split(',').filter(Boolean);
+const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') && !exclude.has(f)).sort();
+let js = '';
+for (const f of [...files, ...extra]) js += fs.readFileSync(path.join(f.startsWith('/') ? '' : dir, f), 'utf8') + '\n';
+const head = fs.readFileSync(path.join(dir, '00_head.html'), 'utf8');
+const tail = fs.readFileSync(path.join(dir, '99_tail.html'), 'utf8');
+fs.writeFileSync(out, head + js + tail);
+fs.writeFileSync('/home/ubuntu/gta-dev/check.mjs', "import * as THREE from './node_modules/three/build/three.module.js';\n" + js.replace("import * as THREE from 'three';\n", ''));
+console.log('built', out, ((head.length + js.length + tail.length) / 1024) | 0, 'KB', js.split('\n').length, 'js lines');

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>LEONIDA — Vice City Open World</title>
+<style>
+:root{--pink:#ff3d9a;--cyan:#2ee6ff;--ui:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;--display:Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#05030d;color:#fff;font-family:var(--ui);user-select:none}
+#game{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.hidden{display:none!important}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:5}
+#radar-wrap{position:absolute;left:28px;bottom:26px;width:286px}
+#radar-frame{position:relative;width:286px;height:188px;border-radius:14px;overflow:hidden;background:#0b1622;box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 0 2px rgba(255,255,255,.08)}
+#radar-frame.wanted-a{box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 0 3px rgba(255,40,70,.95),0 0 18px rgba(255,40,70,.6)}
+#radar-frame.wanted-b{box-shadow:0 6px 24px rgba(0,0,0,.55),0 0 0 3px rgba(40,120,255,.95),0 0 18px rgba(40,120,255,.6)}
+#radar{width:100%;height:100%;display:block}
+#bars{display:flex;gap:5px;margin-top:6px;height:9px}
+.bar{position:relative;height:9px;border-radius:2px;background:rgba(0,0,0,.55);overflow:hidden;flex:1}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:100%}
+.bar.health{flex:1.15}.bar.health i{background:linear-gradient(90deg,#2fa84f,#5dde7a)}
+.bar.armor i{background:linear-gradient(90deg,#2a6fd6,#5ab0ff)}
+.bar.stamina{flex:.75}.bar.stamina i{background:linear-gradient(90deg,#d8c44a,#fff27a)}
+.bar.health.low i{animation:lowhp .6s infinite alternate}
+@keyframes lowhp{from{background:#c0283c}to{background:#ff5a6e}}
+#topright{position:absolute;right:30px;top:24px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#clock{font:600 15px var(--ui);letter-spacing:2px;color:rgba(255,255,255,.85);text-shadow:0 2px 6px #000}
+#cash{font:44px var(--display);color:#7dff8f;text-shadow:2px 2px 0 #0a2a10,0 0 14px rgba(60,255,120,.35);transition:transform .15s}
+#cash.bump{transform:scale(1.12)}
+#cash-delta{font:26px var(--display);color:#7dff8f;height:28px;opacity:0;transition:opacity .4s}
+#cash-delta.neg{color:#ff6b6b}
+#stars{display:flex;gap:4px;height:34px}
+#stars span{font-size:34px;line-height:34px;color:rgba(255,255,255,.14);text-shadow:0 2px 4px #000}
+#stars span.on{color:#fff;text-shadow:0 0 10px rgba(255,255,255,.7)}
+#stars.flash span.on{animation:starflash .5s infinite}
+@keyframes starflash{50%{color:rgba(255,255,255,.2);text-shadow:none}}
+#weapon{display:flex;align-items:center;gap:10px}
+#weapon-icon{width:120px;height:46px}
+#ammo{font:26px var(--display);min-width:86px;text-shadow:2px 2px 0 #000}
+#ammo small{font-size:16px;opacity:.7}
+#speedo{position:absolute;right:30px;bottom:26px;width:250px;height:190px;opacity:0;transform:translateY(16px);transition:opacity .3s,transform .3s}
+#speedo.on{opacity:1;transform:none}
+#rpm{position:absolute;right:0;bottom:0;width:250px;height:190px}
+#mph{position:absolute;right:58px;bottom:62px;font:64px var(--display);text-shadow:0 0 12px rgba(255,61,154,.55),3px 3px 0 #000;text-align:right;width:160px}
+#mph-unit{position:absolute;right:20px;bottom:72px;font:700 13px var(--ui);letter-spacing:2px;color:var(--pink)}
+#gear{position:absolute;right:20px;bottom:100px;font:34px var(--display);color:var(--cyan);text-shadow:2px 2px 0 #000}
+#station{position:absolute;right:20px;bottom:18px;font:700 12px var(--ui);letter-spacing:2px;color:#ffd6f0;text-transform:uppercase}
+#vbars{position:absolute;right:20px;bottom:40px;width:150px;display:flex;flex-direction:column;gap:4px}
+#vbars .vb{height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+#vbars .vb i{display:block;height:100%}
+#nitro i{background:linear-gradient(90deg,#2e8bff,#2ee6ff)}
+#vhealth i{background:linear-gradient(90deg,#ff6b3d,#ffd23d)}
+#crosshair{position:absolute;left:50%;top:50%;width:0;height:0;opacity:0}
+#crosshair.on{opacity:1}
+#crosshair i{position:absolute;background:#fff;box-shadow:0 0 2px #000}
+#crosshair .c0{width:3px;height:3px;left:-1.5px;top:-1.5px;border-radius:50%}
+#crosshair .c1{width:2px;height:9px;left:-1px;top:-16px}#crosshair .c2{width:2px;height:9px;left:-1px;top:7px}
+#crosshair .c3{height:2px;width:9px;top:-1px;left:-16px}#crosshair .c4{height:2px;width:9px;top:-1px;left:7px}
+#crosshair.enemy i{background:#ff3b4e}
+#hitmarker{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:0}
+#hitmarker:before,#hitmarker:after{content:'';position:absolute;left:12px;top:-2px;width:2px;height:30px;background:#fff;transform:rotate(45deg)}
+#hitmarker:after{transform:rotate(-45deg)}
+#hitmarker.on{opacity:1}
+#hitmarker.kill:before,#hitmarker.kill:after{background:#ff3b4e}
+#help{position:absolute;left:28px;top:24px;max-width:420px;padding:14px 18px;background:rgba(8,6,16,.82);border-left:3px solid var(--pink);font:500 15px/1.45 var(--ui);opacity:0;transition:opacity .25s}
+#help.on{opacity:1}
+.key{display:inline-block;min-width:20px;padding:1px 6px;margin:0 2px;border-radius:4px;background:#fff;color:#111;font:700 12px var(--ui);text-align:center}
+#feed{position:absolute;left:28px;bottom:250px;width:340px;display:flex;flex-direction:column-reverse;gap:6px}
+.note{padding:10px 14px;background:rgba(8,6,16,.86);border-radius:6px;font:500 13.5px/1.4 var(--ui);border-left:3px solid var(--cyan);animation:notein .3s ease}
+.note.out{opacity:0;transition:opacity .4s}
+.note b{color:var(--cyan)}
+@keyframes notein{from{opacity:0;transform:translateX(-16px)}}
+#objective{position:absolute;left:50%;bottom:68px;transform:translateX(-50%);text-align:center;font:600 20px/1.35 var(--ui);text-shadow:2px 2px 2px #000;opacity:0}
+#objective.on{opacity:1}
+#objective em{font-style:normal;color:#ffd23d}#objective strong{color:#ff5a7a}#objective u{text-decoration:none;color:#5ab0ff}
+#bigtext{position:absolute;left:0;right:0;top:34%;text-align:center;font:100px var(--display);letter-spacing:4px;opacity:0;transition:opacity .4s}
+#bigtext.on{opacity:1}
+#bigtext small{display:block;font:600 24px var(--ui);letter-spacing:6px;margin-top:6px}
+#mission-title{position:absolute;left:0;right:0;top:28%;text-align:center;opacity:0;transition:opacity .5s}
+#mission-title.on{opacity:1}
+#mission-title h1{font:70px var(--display);letter-spacing:3px;background:linear-gradient(90deg,#ffb36b,#ff3d9a,#a86bff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.85))}
+#mission-title h2{font:600 20px var(--ui);letter-spacing:5px;text-transform:uppercase;text-shadow:2px 2px 4px #000}
+#area-name{position:absolute;right:30px;bottom:230px;text-align:right;font:36px var(--display);letter-spacing:2px;text-shadow:3px 3px 0 #000;opacity:0;transition:opacity .5s}
+#area-name.on{opacity:1}
+#area-name small{display:block;font:600 12px var(--ui);letter-spacing:4px;color:#ffc0e0;text-transform:uppercase}
+#radio-name{position:absolute;left:50%;top:26px;transform:translateX(-50%);text-align:center;opacity:0;transition:opacity .4s}
+#radio-name.on{opacity:1}
+#radio-name .rn{font:32px var(--display);letter-spacing:2px;text-shadow:0 0 16px currentColor,2px 2px 0 #000}
+#radio-name .rs{font:600 12px var(--ui);letter-spacing:4px;text-transform:uppercase}
+#mission-hud{position:absolute;right:30px;top:210px;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.mh{font:24px var(--display);text-shadow:2px 2px 0 #000}
+.mh span{font:700 12px var(--ui);letter-spacing:2px;opacity:.75;margin-right:10px}
+#weapon-wheel{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;opacity:0;transform:scale(.85);transition:opacity .15s,transform .15s;background:radial-gradient(circle,rgba(10,6,20,.1) 28%,rgba(10,6,20,.78) 29%,rgba(10,6,20,.78) 70%,rgba(10,6,20,0) 71%)}
+#weapon-wheel.on{opacity:1;transform:none}
+#weapon-wheel .ws{position:absolute;width:130px;height:70px;margin:-35px 0 0 -65px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px}
+#weapon-wheel .ws canvas{width:100px;height:36px}
+#weapon-wheel .ws div{font:700 11px var(--ui);letter-spacing:1px;text-transform:uppercase;opacity:.85}
+#weapon-wheel .ws.sel{background:rgba(255,61,154,.35);box-shadow:0 0 18px rgba(255,61,154,.5)}
+#weapon-wheel .wc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font:22px var(--display)}
+#scope{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 0,rgba(0,0,0,0) 32vh,#000 32.5vh)}
+#scope.on{opacity:1}
+#scope:before{content:'';position:absolute;left:50%;top:18vh;bottom:18vh;width:2px;margin-left:-1px;background:rgba(0,0,0,.85)}
+#scope:after{content:'';position:absolute;top:50%;left:calc(50% - 32vh);right:calc(50% - 32vh);height:2px;margin-top:-1px;background:rgba(0,0,0,.85)}
+#scope i{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#ff2f4f}
+#damage-vignette{position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(200,0,20,.55) 100%);transition:opacity .2s}
+#fps{position:absolute;left:8px;top:6px;font:600 11px monospace;color:#9f9;text-shadow:1px 1px 0 #000;display:none}
+#fps.on{display:block}
+#flash,#fade,#switch-overlay{position:fixed;inset:0;pointer-events:none}
+#flash{z-index:8;background:#fff;opacity:0}
+#fade{z-index:9;background:#000;opacity:0;transition:opacity .5s}
+#fade.on{opacity:1}
+#switch-overlay{z-index:7;opacity:0;transition:opacity .3s;background:radial-gradient(ellipse at center,rgba(255,255,255,0) 40%,rgba(80,30,120,.55) 100%)}
+#switch-overlay.on{opacity:1}
+#switch-overlay .who{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);font:52px var(--display);letter-spacing:4px;text-shadow:0 0 18px rgba(255,61,154,.8),3px 3px 0 #000}
+#phone{position:fixed;right:42px;bottom:0;width:300px;height:600px;z-index:6;transform:translateY(110%);transition:transform .45s cubic-bezier(.2,.9,.25,1.05);pointer-events:auto}
+#phone.open{transform:translateY(-24px)}
+#phone .body{position:absolute;inset:0;border-radius:44px;background:linear-gradient(145deg,#2b2b33,#0e0e12);padding:12px;box-shadow:0 30px 60px rgba(0,0,0,.7),inset 0 0 0 2px #45454f}
+#phone .screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:linear-gradient(170deg,#2a0f4a,#7a1f6e 40%,#ff5a7a 72%,#ffb36b)}
+#phone .notch{position:absolute;left:50%;top:10px;width:96px;height:26px;margin-left:-48px;border-radius:14px;background:#000;z-index:3}
+#phone .status{position:absolute;left:0;right:0;top:0;height:44px;padding:14px 26px 0;display:flex;justify-content:space-between;font:700 13px var(--ui);z-index:2}
+#phone .page{position:absolute;inset:44px 0 26px;padding:10px 16px;overflow-y:auto;display:none}
+#phone .page.on{display:block}
+#phone .homebar{position:absolute;left:50%;bottom:9px;width:110px;height:5px;margin-left:-55px;border-radius:3px;background:rgba(255,255,255,.75)}
+#phone .bigclock{text-align:center;font:200 64px var(--ui);margin-top:18px}
+#phone .date{text-align:center;font:600 13px var(--ui);letter-spacing:2px;opacity:.85;margin-bottom:22px;text-transform:uppercase}
+#phone .apps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 8px}
+#phone .app{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font:600 11px var(--ui);text-align:center}
+#phone .app .ic{width:62px;height:62px;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.35);font:800 22px var(--ui)}
+#phone .app.sel .ic{box-shadow:0 0 0 3px #fff,0 6px 14px rgba(0,0,0,.35)}
+#phone h3{font:800 20px var(--ui);margin:4px 0}
+#phone .sub{font:500 12px var(--ui);opacity:.8;margin-bottom:10px}
+#phone .item{display:flex;align-items:center;gap:10px;padding:11px;margin-bottom:8px;border-radius:14px;background:rgba(10,4,24,.55);cursor:pointer}
+#phone .item.sel,#phone .item:hover{background:rgba(255,255,255,.22)}
+#phone .item .t{flex:1;font:700 14px var(--ui)}
+#phone .item .t small{display:block;font:500 11px var(--ui);opacity:.75;margin-top:2px}
+#phone .item .p{font:800 13px var(--ui);color:#7dff8f}
+#phone .item.disabled{opacity:.45}
+#phone .back{font:700 13px var(--ui);cursor:pointer;margin-bottom:6px;display:inline-block}
+#phone .seg{display:flex;gap:6px;margin:6px 0 12px;flex-wrap:wrap}
+#phone .seg button{flex:1;min-width:58px;padding:8px 4px;border:0;border-radius:10px;background:rgba(10,4,24,.55);color:#fff;font:700 11px var(--ui);cursor:pointer}
+#phone .seg button.on{background:#fff;color:#111}
+#phone .seg button.sel{box-shadow:0 0 0 2px #fff}
+#phone .lbl{font:800 11px var(--ui);letter-spacing:2px;text-transform:uppercase;opacity:.75}
+#phone input[type=range]{width:100%;accent-color:#ff3d9a;margin:6px 0 10px}
+#phone .toast{position:absolute;left:14px;right:14px;bottom:36px;padding:10px;border-radius:12px;background:rgba(0,0,0,.82);font:600 12px var(--ui);text-align:center;opacity:0;transition:opacity .3s;z-index:4}
+#phone .toast.on{opacity:1}
+#splash{position:fixed;inset:0;z-index:20;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#12051f}
+#splash .sky{position:absolute;inset:0;background:linear-gradient(180deg,#1a0633,#4a0f5e 30%,#b8246e 55%,#ff6a5a 72%,#ffb36b 84%,#2a0a3d 84.2%,#120318)}
+#splash .sun{position:absolute;left:50%;top:42%;width:420px;height:420px;margin-left:-210px;border-radius:50%;background:linear-gradient(180deg,#fff17a,#ffb03b 35%,#ff3d7a 75%,#c41f8a);-webkit-mask:repeating-linear-gradient(180deg,#000 0 20px,transparent 20px 26px);mask:repeating-linear-gradient(180deg,#000 0 20px,transparent 20px 26px);box-shadow:0 0 120px rgba(255,90,140,.55)}
+#splash .grid{position:absolute;left:-50%;right:-50%;bottom:-8%;height:40%;background-image:linear-gradient(rgba(255,61,154,.5) 2px,transparent 2px),linear-gradient(90deg,rgba(255,61,154,.5) 2px,transparent 2px);background-size:80px 56px;transform:perspective(420px) rotateX(62deg);transform-origin:50% 0;animation:gridmove 2.2s linear infinite;-webkit-mask-image:linear-gradient(transparent,#000 40%);mask-image:linear-gradient(transparent,#000 40%)}
+@keyframes gridmove{to{background-position:0 56px}}
+#splash .content{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center}
+#splash .logo{font:200px/0.85 var(--display);letter-spacing:-6px;background:linear-gradient(160deg,#ffe27a,#ff9a3c 30%,#ff3d9a 60%,#a63dff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 28px rgba(255,61,154,.55)) drop-shadow(6px 6px 0 rgba(20,0,30,.9))}
+#splash .title{font:54px var(--display);letter-spacing:14px;color:#fff;text-shadow:0 0 12px #ff3d9a,0 0 30px #ff3d9a,4px 4px 0 #2a0040}
+#splash .tag{font:600 13px var(--ui);letter-spacing:5px;text-transform:uppercase;margin-top:8px;color:#ffd6f0}
+#play{margin-top:28px;padding:16px 52px;font:32px var(--display);letter-spacing:6px;color:#fff;background:linear-gradient(90deg,rgba(255,61,154,.25),rgba(139,61,255,.25));border:3px solid #ff3d9a;border-radius:6px;cursor:pointer;text-shadow:0 0 12px #ff3d9a;box-shadow:0 0 22px rgba(255,61,154,.7),inset 0 0 22px rgba(255,61,154,.4)}
+#play:hover:not(:disabled){transform:scale(1.05)}
+#play:disabled{opacity:.4;cursor:wait}
+#loadbar{width:420px;height:6px;margin-top:18px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+#loadbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9a3c,#ff3d9a,#a63dff);transition:width .2s}
+#loadtxt{font:600 12px var(--ui);letter-spacing:3px;margin-top:8px;text-transform:uppercase;height:16px}
+.legend{display:grid;grid-template-columns:repeat(4,auto);gap:7px 22px;margin-top:22px;padding:14px 20px;border-radius:12px;background:rgba(10,3,24,.62);border:1px solid rgba(255,61,154,.35);font:500 12.5px var(--ui);text-align:left}
+#pause{position:fixed;inset:0;z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,2,18,.74);backdrop-filter:blur(6px)}
+#pause h1{font:90px var(--display);letter-spacing:8px;background:linear-gradient(90deg,#ffb36b,#ff3d9a,#a86bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#pause p{letter-spacing:4px;text-transform:uppercase;margin-top:4px}
+#resume{margin-top:18px;padding:12px 36px;font:22px var(--display);letter-spacing:4px;color:#fff;background:rgba(255,61,154,.2);border:2px solid #ff3d9a;border-radius:6px;cursor:pointer}
+#err{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px 16px;background:#5a0012;font:600 12px monospace;display:none;white-space:pre-wrap;max-height:40vh;overflow:auto}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="game" tabindex="0"></canvas>
+<div id="hud" class="hidden">
+  <div id="radar-wrap"><div id="radar-frame"><canvas id="radar" width="572" height="376"></canvas></div>
+    <div id="bars"><div class="bar health" id="hb"><i></i></div><div class="bar armor" id="ab"><i></i></div><div class="bar stamina" id="sb"><i></i></div></div></div>
+  <div id="topright"><div id="clock">18:24</div><div id="cash">$0</div><div id="cash-delta"></div>
+    <div id="stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+    <div id="weapon"><canvas id="weapon-icon" width="240" height="92"></canvas><div id="ammo"></div></div></div>
+  <div id="mission-hud"></div>
+  <div id="speedo"><canvas id="rpm" width="500" height="380"></canvas><div id="gear">N</div><div id="mph">0</div><div id="mph-unit">MPH</div>
+    <div id="vbars"><div class="vb" id="nitro"><i></i></div><div class="vb" id="vhealth"><i></i></div></div><div id="station"></div></div>
+  <div id="crosshair"><i class="c0"></i><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></div>
+  <div id="hitmarker"></div><div id="scope"><i></i></div><div id="damage-vignette"></div>
+  <div id="help"></div><div id="feed"></div><div id="objective"></div><div id="bigtext"></div>
+  <div id="mission-title"><h1></h1><h2></h2></div><div id="area-name"></div>
+  <div id="radio-name"><div class="rn"></div><div class="rs"></div></div>
+  <div id="weapon-wheel"><div class="wc"></div></div><div id="fps"></div>
+</div>
+<div id="phone"><div class="body"><div class="screen"><div class="notch"></div>
+  <div class="status"><span id="ph-time">18:24</span><span>5G</span></div>
+  <div class="page on" id="pg-home"><div class="bigclock" id="ph-bigclock">18:24</div><div class="date">Leonida · Vice City</div><div class="apps" id="ph-apps"></div></div>
+  <div class="page" id="pg-garage"></div><div class="page" id="pg-contracts"></div><div class="page" id="pg-director"></div>
+  <div class="toast" id="ph-toast"></div><div class="homebar"></div>
+</div></div></div>
+<div id="flash"></div><div id="fade"></div><div id="switch-overlay"><div class="who"></div></div>
+<div id="splash"><div class="sky"></div><div class="sun"></div><div class="grid"></div>
+  <div class="content">
+    <div class="logo">VI</div><div class="title">LEONIDA</div>
+    <div class="tag">Vice City · An open world forged entirely from code</div>
+    <button id="play" disabled>PLAY LEONIDA</button>
+    <div id="loadbar"><i></i></div><div id="loadtxt">Initializing</div>
+    <div class="legend">
+      <div><span class="key">W A S D</span> Move / Drive</div><div><span class="key">Mouse</span> Look / Aim</div>
+      <div><span class="key">LMB</span> Fire / Punch</div><div><span class="key">RMB</span> Aim / Scope</div>
+      <div><span class="key">Shift</span> Sprint / Nitro</div><div><span class="key">Space</span> Jump / Handbrake</div>
+      <div><span class="key">F</span> Enter / Carjack</div><div><span class="key">C</span> Switch Protagonist</div>
+      <div><span class="key">1-6</span> Weapons</div><div><span class="key">Q</span> Weapon Wheel</div>
+      <div><span class="key">R</span> Radio / Reload</div><div><span class="key">P</span> Smartphone</div>
+      <div><span class="key">H</span> Horn · <span class="key">L</span> Siren</div><div><span class="key">Heli</span> W/S lift · A/D yaw · mouse cyclic</div>
+      <div><span class="key">Esc</span> Pause</div><div><span class="key">`</span> FPS</div>
+    </div>
+  </div>
+</div>
+<div id="pause" class="hidden"><h1>PAUSED</h1><p>Leonida is waiting</p><div class="legend" id="pause-legend"></div><button id="resume">RESUME</button></div>
+<div id="err"></div>
+<script type="module">
